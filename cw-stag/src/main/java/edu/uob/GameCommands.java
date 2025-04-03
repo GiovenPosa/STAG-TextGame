@@ -24,14 +24,16 @@ public class GameCommands {
         if (!commandMatcher.find()) {
             return "Invalid command.\n";
         }
-        String playerName = commandMatcher.group(1).trim().toLowerCase();
-        String playerCommand = commandMatcher.group(2).trim().toLowerCase();
-
+        String playerName = commandMatcher.group(1).trim();
+        if (playerName.isEmpty() || playerName.matches(".*[^a-zA-Z\\s'’\\-].*")) {
+            return "Invalid player name. Only letters, spaces, apostrophes, and hyphens are allowed\n";
+        }
         GamePlayers currentPlayer = this.gameController.getOrCreatePlayer(playerName);
         this.currentPlayerName = currentPlayer.getPlayerName();
         this.currentPlayerLocation = this.gameController.getCurrentLocations(this.currentPlayerName);
-
+        String playerCommand = commandMatcher.group(2).trim().toLowerCase();
         LinkedList<String> commandParts = new LinkedList<>(Arrays.asList(playerCommand.split(" ")));
+
         if (commandParts.isEmpty()) {
             return "Invalid command.\n";
         }
@@ -67,6 +69,12 @@ public class GameCommands {
             }
             return this.dropCommand(playerCommand);
         }
+        else if ("health".equals(mainCommand)) {
+            if (commandParts.size() > 1) {
+                return "Invalid Help Command.\n";
+            }
+            return this.healthCommand();
+        }
         else {
             return this.gameCustomCommands.getCustomCommands(playerName, playerCommand);
         }
@@ -86,7 +94,7 @@ public class GameCommands {
             Map<String, GameCharacters> characters = this.gameController.getCharactersAtLocation(this.currentPlayerLocation);
             GamePlayers otherPlayers = this.gameController.getPlayersAtLocation(this.currentPlayerName, this.currentPlayerLocation);
 
-            if (artefacts != null && furniture != null && characters != null && otherPlayers != null) {
+            if (artefacts != null || furniture != null || characters != null || otherPlayers != null) {
                 outputText.append("You can see: \n");
             }
 
@@ -179,7 +187,7 @@ public class GameCommands {
 
         if (getMatcher.matches()) {
             String artefactName = getMatcher.group(1).trim();
-                if (allowedArtefacts.containsKey(artefactName)) {
+                if (allowedArtefacts != null && allowedArtefacts.containsKey(artefactName)) {
                     GameArtefacts artefactObject = allowedArtefacts.get(artefactName);
                     gameController.pickUpArtefactsAtLocation(this.currentPlayerName, this.currentPlayerLocation, artefactObject);
                     outputText.append("Picked up ")
@@ -213,5 +221,16 @@ public class GameCommands {
             }
         }
         return outputText.toString();
+    }
+
+    private String healthCommand() {
+        Integer currentPlayerHealth = this.gameController.getCurrentPlayerHealth(this.currentPlayerName);
+        StringBuilder outputText = new StringBuilder();
+        if (currentPlayerHealth != null) {
+            return outputText.append("Current Health: ")
+                    .append(currentPlayerHealth)
+                    .append("\n").toString();
+        }
+        return "Current player is not found.\n";
     }
 }

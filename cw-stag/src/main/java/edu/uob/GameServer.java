@@ -11,8 +11,16 @@ public final class GameServer {
     private final GameController gameController;
 
     public static void main(String[] args) throws IOException {
-        File entitiesFile = Paths.get("config" + File.separator + "extended-entities.dot").toAbsolutePath().toFile();
-        File actionsFile = Paths.get("config" + File.separator + "extended-actions.xml").toAbsolutePath().toFile();
+        StringBuilder entityFilePath;
+        entityFilePath = new StringBuilder();
+        entityFilePath.append("config").append(File.separator).append("extended-entities.dot");
+
+        StringBuilder actionFilePath;
+        actionFilePath = new StringBuilder();
+        actionFilePath.append("config").append(File.separator).append("extended-actions.xml");
+
+        File entitiesFile = Paths.get(entityFilePath.toString()).toAbsolutePath().toFile();
+        File actionsFile = Paths.get(actionFilePath.toString()).toAbsolutePath().toFile();
         GameServer server = new GameServer(entitiesFile, actionsFile);
         server.blockingListenOn(8888);
     }
@@ -27,7 +35,6 @@ public final class GameServer {
     public GameServer(File entitiesFile, File actionsFile) {
         LoadEntityFile loadEntityFile = new LoadEntityFile(entitiesFile);
         LoadActionFile loadActionFile = new LoadActionFile(actionsFile);
-
         gameController = new GameController(loadEntityFile, loadActionFile);
     }
 
@@ -41,6 +48,14 @@ public final class GameServer {
         return gameController.getCommandFromServer(command);
     }
 
+    private static String stringBuilder(String... strings) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String string : strings) {
+            stringBuilder.append(string);
+        }
+        return stringBuilder.toString();
+    }
+
     /**
     * Do not change the following method signature or we won't be able to mark your submission
     * Starts a *blocking* socket server listening for new connections.
@@ -50,10 +65,11 @@ public final class GameServer {
     */
     public void blockingListenOn(int portNumber) throws IOException {
         try (ServerSocket s = new ServerSocket(portNumber)) {
-            System.out.println("Server listening on port " + portNumber);
+            System.out.print("Server listening on port ");
+            System.out.println(portNumber);
             while (!Thread.interrupted()) {
                 try {
-                    blockingHandleConnection(s);
+                    this.blockingHandleConnection(s);
                 } catch (IOException e) {
                     System.out.println("Connection closed");
                 }
@@ -75,10 +91,12 @@ public final class GameServer {
             System.out.println("Connection established");
             String incomingCommand = reader.readLine();
             if(incomingCommand != null) {
-                System.out.println("Received message from " + incomingCommand);
-                String result = handleCommand(incomingCommand);
+                System.out.println(stringBuilder("Received message from ", incomingCommand));
+                String result = this.handleCommand(incomingCommand);
                 writer.write(result);
-                writer.write("\n" + END_OF_TRANSMISSION + "\n");
+                writer.newLine();
+                writer.write(END_OF_TRANSMISSION);
+                writer.newLine();
                 writer.flush();
             }
         }

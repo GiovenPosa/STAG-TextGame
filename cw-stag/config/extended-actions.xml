@@ -89,6 +89,23 @@
 
     <action>
         <triggers>
+            <keyphrase>pay</keyphrase>
+        </triggers>
+        <subjects>
+            <entity>jack</entity>
+            <entity>coin</entity>
+        </subjects>
+        <consumed>
+            <entity>coin</entity>
+        </consumed>
+        <produced>
+            <entity>shovel</entity>
+        </produced>
+        <narration>You pay the jack your silver coin and he produces a shovel</narration>
+    </action>
+
+    <action>
+        <triggers>
             <keyphrase>bridge</keyphrase>
         </triggers>
         <subjects>

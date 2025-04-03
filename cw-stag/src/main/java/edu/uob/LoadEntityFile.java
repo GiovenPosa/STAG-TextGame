@@ -35,7 +35,6 @@ public class LoadEntityFile {
         } catch (FileNotFoundException | ParseException e) {
             e.getCause();
         }
-
         return Objects.requireNonNull(p).getGraphs().get(0);
     }
 
@@ -175,12 +174,33 @@ public class LoadEntityFile {
         }
     }
 
-    public void addArtefact(String locationName, GameArtefacts droppedArtefact) {
+    public void removeCharacter(String locationName, GameCharacters character) {
+        Map<String, GameCharacters> charactersMap = this.locationCharacters.get(locationName);
 
+        if (charactersMap != null) {
+            charactersMap.remove(character.getName());
+        }
+    }
+
+    public void addArtefact(String locationName, GameArtefacts droppedArtefact) {
        if (!this.locationArtefacts.containsKey(locationName)) {
            this.locationArtefacts.put(locationName, new LinkedHashMap<>());
        }
        this.locationArtefacts.get(locationName).put(droppedArtefact.getName(), droppedArtefact);
+    }
+
+    public void addFurniture(String locationName, GameFurniture furniture) {
+        if (!this.locationFurniture.containsKey(locationName)) {
+            this.locationFurniture.put(locationName, new LinkedHashMap<>());
+        }
+        this.locationFurniture.get(locationName).put(furniture.getName(), furniture);
+    }
+
+    public void addCharacter(String locationName, GameCharacters gameCharacter) {
+        if (!this.locationCharacters.containsKey(locationName)) {
+            this.locationCharacters.put(locationName, new LinkedHashMap<>());
+        }
+        this.locationCharacters.get(locationName).put(gameCharacter.getName(), gameCharacter);
     }
 
 }

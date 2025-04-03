@@ -27,6 +27,9 @@ public class GameCustomCommands {
             return "Invalid command.\n";
         }
 
+        int matchCount = 0;
+        GameAction matchedAction = null;
+
         for (GameAction gameAction : gameActions) {
             boolean hasTriggerPhrase = false;
             boolean hasSubjectEntity = false;
@@ -43,8 +46,15 @@ public class GameCustomCommands {
                 }
             }
             if (hasTriggerPhrase && hasSubjectEntity) {
-                return this.outputProducedActionText(gameAction);
+                matchCount++;
+                matchedAction = gameAction;
             }
+        }
+
+        if (matchCount > 1) {
+            return "Multiple actions is available. Try do one action or be more specific.\n";
+        } else if (matchCount == 1) {
+            return this.outputProducedActionText(matchedAction);
         }
         return "Not a valid action!\n";
     }
@@ -68,58 +78,97 @@ public class GameCustomCommands {
     }
 
     private String outputProducedActionText(GameAction gameAction) {
-        boolean isInLocation = this.isSubjectEntityInLocation(gameAction);
-        boolean isInInventory = this.isSubjectEntityInPlayerInventory(gameAction);
+        int currentHealth = gameController.getCurrentPlayerHealth(this.currentPlayerName);
+        if (currentHealth <= 1) {
+            GamePlayers currentPlayer = this.gameController.getOrCreatePlayer(this.currentPlayerName);
+            return gameController.restartPlayerState(this.currentPlayerLocation, currentPlayer);
+        }
 
-        if (!isInLocation) {
-            return "We cant do that in this location!\n";
+        LinkedList<String> requiredEntities = gameAction.getSubjectEntities();
+        LinkedList<String> availableEntities = new LinkedList<>();
+
+        availableEntities.addAll(this.isFurnitureEntityAvailable(gameAction));
+        availableEntities.addAll(this.isArtefactEntityAvailable(gameAction));
+        availableEntities.addAll(this.isCharacterEntityAvailable(gameAction));
+
+        for (String requiredEntity : requiredEntities) {
+            boolean found = false;
+            for (String availableEntity : availableEntities) {
+                if (requiredEntity.equalsIgnoreCase(availableEntity)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return "Missing required entities to complete the action!\n";
+            }
         }
-        else if (!isInInventory) {
-            return "Missing things in inventory!\n";
-        }
-        gameController.produceNewEntity(this.currentPlayerName, this.currentPlayerLocation, gameAction);
         gameController.consumeEntity(this.currentPlayerName, this.currentPlayerLocation, gameAction);
+        gameController.produceEntity(this.currentPlayerName, this.currentPlayerLocation, gameAction);
         return gameAction.outputProducedText();
 
     }
 
-    private boolean isSubjectEntityInLocation(GameAction gameAction) {
+    private LinkedList<String> isFurnitureEntityAvailable(GameAction gameAction) {
         Map<String, GameFurniture> furnituresInLocation = gameController.getFurnitureAtLocation(this.currentPlayerLocation);
         LinkedList<String> subjectEntities = new LinkedList<>(gameAction.getSubjectEntities());
+        LinkedList<String> matchedFurniture = new LinkedList<>();
 
         if (furnituresInLocation != null && !furnituresInLocation.isEmpty()) {
             for (GameFurniture gameFurniture : furnituresInLocation.values()) {
                 String furnitureName = gameFurniture.getName().toLowerCase();
                 for (String subjectEntity : subjectEntities) {
-                    if (furnitureName.equals(subjectEntity)) {
-                        return true;
+                    if (furnitureName.equalsIgnoreCase(subjectEntity)) {
+                        matchedFurniture.add(furnitureName);
                     }
                 }
             }
         }
-        return false;
+        return matchedFurniture;
     }
 
-    private boolean isSubjectEntityInPlayerInventory(GameAction gameAction) {
+    private LinkedList<String> isCharacterEntityAvailable(GameAction gameAction) {
+        Map<String, GameCharacters> characterInLocation = gameController.getCharactersAtLocation(this.currentPlayerLocation);
+        LinkedList<String> subjectEntities = new LinkedList<>(gameAction.getSubjectEntities());
+        LinkedList<String> matchedCharacters = new LinkedList<>();
+
+        if (characterInLocation != null && !characterInLocation.isEmpty()) {
+            for (GameCharacters gameCharacter : characterInLocation.values()) {
+                String characterName = gameCharacter.getName().toLowerCase();
+                for (String subjectEntity : subjectEntities) {
+                    if (characterName.equalsIgnoreCase(subjectEntity)) {
+                        matchedCharacters.add(characterName);
+                    }
+                }
+            }
+        }
+        return matchedCharacters;
+    }
+
+    private LinkedList<String> isArtefactEntityAvailable(GameAction gameAction) {
         Map<String, GameArtefacts> playersInventory = gameController.getCurrentInventory(this.currentPlayerName);
         Map<String, GameArtefacts> artefactsInLocation = gameController.getArtefactsAtLocation(this.currentPlayerLocation);
         LinkedList<String> subjectEntities = new LinkedList<>(gameAction.getSubjectEntities());
+        LinkedList<String> matchedArtefacts = new LinkedList<>();
 
-        if (checkArtefact(playersInventory, subjectEntities)) return true;
-        return checkArtefact(artefactsInLocation, subjectEntities);
+        matchedArtefacts.addAll(this.checkArtefact(playersInventory, subjectEntities));
+        matchedArtefacts.addAll(this.checkArtefact(artefactsInLocation, subjectEntities));
+        return matchedArtefacts;
     }
 
-    private boolean checkArtefact(Map<String, GameArtefacts> artefactsIn, LinkedList<String> subjectEntities) {
+    private LinkedList<String> checkArtefact(Map<String, GameArtefacts> artefactsIn, LinkedList<String> subjectEntities) {
+        LinkedList<String> matchedArtefacts = new LinkedList<>();
+
         if (artefactsIn != null && !artefactsIn.isEmpty()) {
             for (GameArtefacts gameArtefacts : artefactsIn.values()) {
                 String artefactName = gameArtefacts.getName().toLowerCase();
                 for (String subjectEntity : subjectEntities) {
-                    if (artefactName.equals(subjectEntity)) {
-                        return true;
-                    }
+                   if(artefactName.equalsIgnoreCase(subjectEntity)) {
+                       matchedArtefacts.add(artefactName);
+                   }
                 }
             }
         }
-        return false;
+        return matchedArtefacts;
     }
 }

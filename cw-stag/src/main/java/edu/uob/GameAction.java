@@ -38,10 +38,9 @@ public class GameAction {
     }
 
     public String outputProducedText() {
-        StringBuilder outputText = new StringBuilder();
-        outputText.append("You have produced: ")
-                .append(getProducedEntities().toString()).append("\n")
-                .append(getNarration().toString()).append("\n");
-        return outputText.toString();
+        StringBuilder outputText;
+        outputText = new StringBuilder();
+        return outputText.append(String.join(" ", this.getNarration())).append(".\n").toString();
+
     }
 }

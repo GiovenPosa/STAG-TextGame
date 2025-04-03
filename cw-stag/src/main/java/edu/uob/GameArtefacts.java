@@ -3,7 +3,6 @@ package edu.uob;
 import java.util.Map;
 
 public class GameArtefacts extends GameEntity{
-
     protected String name;
     protected String description;
     Map<String, GameLocations> location;

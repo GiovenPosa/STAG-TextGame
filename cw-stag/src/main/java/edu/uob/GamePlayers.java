@@ -6,6 +6,7 @@ import java.util.Map;
 public class GamePlayers {
     private final String playerName;
     private String playerLocation;
+    private int playerHealth = 3;
     Map<String, GameArtefacts> playerInventory = new HashMap<>();
 
     public GamePlayers(String playerName) {
@@ -32,7 +33,15 @@ public class GamePlayers {
         this.playerInventory.put(desiredArtefact.getName(), desiredArtefact);
     }
 
-    public void dropArtefact(GameArtefacts desiredArtefact) {
+    public void removeArtefact(GameArtefacts desiredArtefact) {
         this.playerInventory.remove(desiredArtefact.getName());
+    }
+
+    public int getPlayerHealth() {
+        return this.playerHealth;
+    }
+
+    public void setPlayerHealth(int newHealth) {
+        this.playerHealth = newHealth;
     }
 }
